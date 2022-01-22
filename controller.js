@@ -20,13 +20,23 @@ async function remove(id) {
     await fs.writeFile(notesPath, JSON.stringify(filterNotes))
 }
 
+async function edit(id, body) {
+    const notes = await getNotes()
+    const changeNotes = notes.map(n => {
+        if (n.id === id) {
+            return {...n, ...body}
+        }
+        return n
+    })
+    await fs.writeFile(notesPath, JSON.stringify(changeNotes))
+}
+
 async function print() {
     const notes = await getNotes()
     console.log(chalk.yellow('Here is the list of notes:'))
     notes.forEach(n => console.log(`\t ${chalk.blue(n.id)}\t\t${chalk.green(n.title)}`))
 
 }
-
 
 async function getNotes() {
     const notes = await fs.readFile(notesPath, {encoding: 'utf8'})
@@ -35,5 +45,5 @@ async function getNotes() {
 }
 
 module.exports = {
-    add, remove, print
+    add, remove, print, edit, getNotes
 }

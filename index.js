@@ -1,31 +1,54 @@
-const yargs = require('yargs')
-const pkg = require('./package.json')
-const {add, remove, print} = require('./controller')
+const chalk = require('chalk')
+const express = require('express')
+const path = require('path')
+const {remove, add, getNotes, edit} = require('./controller')
 
-yargs.version(pkg.version)
+const PORT = 3000
+const app = express()
 
-yargs.command({
-    command: 'add',
-    describe: 'Add new note to list',
-    handler({title}) {
-        add(title)
-    }
+app.set('view engine', 'ejs')
+app.set('views', 'pages')
+
+app.use(express.static(path.resolve(__dirname, 'public')))
+app.use(express.json())
+app.use(express.urlencoded({extended: true}))
+
+app.get('/', async (req, res) => {
+    res.render('index', {
+        title: 'Express app',
+        notes: await getNotes(),
+        created: false
+    })
 })
 
-yargs.command({
-    command: 'delete',
-    describe: 'Remove note by id',
-    handler({id}) {
-        remove(id.toString())
-    }
+app.post('/', async (req, res) => {
+    await add(req.body.title)
+    res.render('index', {
+        title: 'Express app',
+        notes: await getNotes(),
+        created: true
+    })
 })
 
-yargs.command({
-    command: 'list',
-    describe: 'Print all notes',
-    async handler() {
-        await print()
-    }
+app.delete('/:id', async (req, res) => {
+    await remove(req.params.id)
+    res.render('index', {
+        title: 'Express app',
+        notes: await getNotes(),
+        created: false
+    })
 })
 
-yargs.parse()
+app.put('/:id', async (req, res) => {
+    await edit(req.params.id, req.body)
+    res.render('index', {
+        title: 'Express app',
+        notes: await getNotes(),
+        created: false
+    })
+})
+
+
+app.listen(PORT, () => {
+    console.log(chalk.green(`Server run on ${PORT} port`))
+})
